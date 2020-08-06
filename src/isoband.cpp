@@ -1608,10 +1608,10 @@ public:
         do {
           cur = polygon_grid[cur].prev;
           i++;
-          if (i % 100000 == 0 && checkInterrupt()) {
-            interrupted = true;
-            return R_NilValue;
-          }
+          // if (i % 100000 == 0 && checkInterrupt()) {
+          //   interrupted = true;
+          //   return R_NilValue;
+          // }
         } while (!(cur == start || polygon_grid[cur].prev == grid_point()));
       }
 
@@ -1629,10 +1629,10 @@ public:
         polygon_grid[cur].collected = true;
         cur = polygon_grid[cur].next;
         i++;
-        if (i % 100000 == 0 && checkInterrupt()) {
-          interrupted = true;
-          return R_NilValue;
-        }
+        // if (i % 100000 == 0 && checkInterrupt()) {
+        //   interrupted = true;
+        //   return R_NilValue;
+        // }
       } while (!(cur == start || cur == grid_point())); // keep going until we reach the start point again
       // if we're back to start, need to output that point one more time
       if (cur == start) {
