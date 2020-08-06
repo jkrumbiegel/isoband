@@ -1670,33 +1670,41 @@ public:
   }
 };
 
-// extern "C" SEXP isobands_impl(SEXP x, SEXP y, SEXP z, SEXP value_low, SEXP value_high) {
 
-//   BEGIN_CPP
-//   isobander ib(x, y, z);
+struct resultStruct {
+  double *x;
+  double *y;
+  int *id;
+  int len;
+};
 
-//   int n_bands = Rf_length(value_low);
-//   if (n_bands != Rf_length(value_high)) {
-//     Rf_error("Vectors of low and high values must have the same number of elements.");
-//   }
+extern "C" resultStruct isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low, double value_high) {
 
-//   ib.calculate_contour();
-//   SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
+  BEGIN_CPP
+  isobander ib(x, lenx, y, leny, z, nrow, ncol);
 
-//   for (int i = 0; i < n_bands; ++i) {
-//     ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
-//     ib.calculate_contour();
-//     SET_VECTOR_ELT(out, i, ib.collect());
-//     if (ib.was_interrupted()) {
-//       longjump_interrupt();
-//     }
-//   }
+  int n_bands = Rf_length(value_low);
+  if (n_bands != Rf_length(value_high)) {
+    Rf_error("Vectors of low and high values must have the same number of elements.");
+  }
 
-//   UNPROTECT(1);
-//   return out;
+  ib.calculate_contour();
+  SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
 
-//   END_CPP
-// }
+  for (int i = 0; i < n_bands; ++i) {
+    ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
+    ib.calculate_contour();
+    SET_VECTOR_ELT(out, i, ib.collect());
+    if (ib.was_interrupted()) {
+      longjump_interrupt();
+    }
+  }
+
+  UNPROTECT(1);
+  return out;
+
+  END_CPP
+}
 
 // extern "C" SEXP isolines_impl(SEXP x, SEXP y, SEXP z, SEXP value) {
 
