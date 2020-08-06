@@ -1226,7 +1226,7 @@ public:
     }
   }
 
-  virtual SEXP collect() {
+  virtual tuple<vector<double>, vector<double>, vector<int>> collect() {
     // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
@@ -1284,30 +1284,31 @@ public:
         // }
       } while (!(cur == start)); // keep going until we reach the start point again
     }
-    // output variable
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, 3));
-    SET_STRING_ELT(names, 0, Rf_mkChar("x"));
-    SET_STRING_ELT(names, 1, Rf_mkChar("y"));
-    SET_STRING_ELT(names, 2, Rf_mkChar("id"));
-    Rf_setAttrib(res, Rf_install("names"), names);
+    // // output variable
+    // SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    // SEXP names = PROTECT(Rf_allocVector(STRSXP, 3));
+    // SET_STRING_ELT(names, 0, Rf_mkChar("x"));
+    // SET_STRING_ELT(names, 1, Rf_mkChar("y"));
+    // SET_STRING_ELT(names, 2, Rf_mkChar("id"));
+    // Rf_setAttrib(res, Rf_install("names"), names);
 
-    int final_size = x_out.size();
-    SEXP x_final = SET_VECTOR_ELT(res, 0, Rf_allocVector(REALSXP, final_size));
-    double* x_final_p = REAL(x_final);
-    SEXP y_final = SET_VECTOR_ELT(res, 1, Rf_allocVector(REALSXP, final_size));
-    double* y_final_p = REAL(y_final);
-    SEXP id_final = SET_VECTOR_ELT(res, 2, Rf_allocVector(INTSXP, final_size));
-    int* id_final_p = INTEGER(id_final);
+    // int final_size = x_out.size();
+    // SEXP x_final = SET_VECTOR_ELT(res, 0, Rf_allocVector(REALSXP, final_size));
+    // double* x_final_p = REAL(x_final);
+    // SEXP y_final = SET_VECTOR_ELT(res, 1, Rf_allocVector(REALSXP, final_size));
+    // double* y_final_p = REAL(y_final);
+    // SEXP id_final = SET_VECTOR_ELT(res, 2, Rf_allocVector(INTSXP, final_size));
+    // int* id_final_p = INTEGER(id_final);
 
-    for (int i = 0; i < final_size; ++i) {
-      x_final_p[i] = x_out[i];
-      y_final_p[i] = y_out[i];
-      id_final_p[i] = id[i];
-    }
+    // for (int i = 0; i < final_size; ++i) {
+    //   x_final_p[i] = x_out[i];
+    //   y_final_p[i] = y_out[i];
+    //   id_final_p[i] = id[i];
+    // }
 
-    UNPROTECT(2);
-    return res;
+    // UNPROTECT(2);
+
+    return make_tuple(x_out, y_out, id);
   }
 };
 
