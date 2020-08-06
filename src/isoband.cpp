@@ -1580,10 +1580,10 @@ public:
   }
 
   virtual SEXP collect() {
-    // Early exit if calculate_contour was interrupted
-    if (was_interrupted()) {
-      return R_NilValue;
-    }
+    // // Early exit if calculate_contour was interrupted
+    // if (was_interrupted()) {
+    //   return R_NilValue;
+    // }
 
     // make line segments
     vector<double> x_out, y_out; vector<int> id;  // vectors holding resulting polygon paths
