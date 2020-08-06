@@ -1670,53 +1670,53 @@ public:
   }
 };
 
-extern "C" SEXP isobands_impl(SEXP x, SEXP y, SEXP z, SEXP value_low, SEXP value_high) {
+// extern "C" SEXP isobands_impl(SEXP x, SEXP y, SEXP z, SEXP value_low, SEXP value_high) {
 
-  BEGIN_CPP
-  isobander ib(x, y, z);
+//   BEGIN_CPP
+//   isobander ib(x, y, z);
 
-  int n_bands = Rf_length(value_low);
-  if (n_bands != Rf_length(value_high)) {
-    Rf_error("Vectors of low and high values must have the same number of elements.");
-  }
+//   int n_bands = Rf_length(value_low);
+//   if (n_bands != Rf_length(value_high)) {
+//     Rf_error("Vectors of low and high values must have the same number of elements.");
+//   }
 
-  ib.calculate_contour();
-  SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
+//   ib.calculate_contour();
+//   SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
 
-  for (int i = 0; i < n_bands; ++i) {
-    ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
-    ib.calculate_contour();
-    SET_VECTOR_ELT(out, i, ib.collect());
-    if (ib.was_interrupted()) {
-      longjump_interrupt();
-    }
-  }
+//   for (int i = 0; i < n_bands; ++i) {
+//     ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
+//     ib.calculate_contour();
+//     SET_VECTOR_ELT(out, i, ib.collect());
+//     if (ib.was_interrupted()) {
+//       longjump_interrupt();
+//     }
+//   }
 
-  UNPROTECT(1);
-  return out;
+//   UNPROTECT(1);
+//   return out;
 
-  END_CPP
-}
+//   END_CPP
+// }
 
-extern "C" SEXP isolines_impl(SEXP x, SEXP y, SEXP z, SEXP value) {
+// extern "C" SEXP isolines_impl(SEXP x, SEXP y, SEXP z, SEXP value) {
 
-  BEGIN_CPP
-  isoliner il(x, y, z);
+//   BEGIN_CPP
+//   isoliner il(x, y, z);
 
-  int n_lines = Rf_length(value);
-  SEXP out = PROTECT(Rf_allocVector(VECSXP, n_lines));
+//   int n_lines = Rf_length(value);
+//   SEXP out = PROTECT(Rf_allocVector(VECSXP, n_lines));
 
-  for (int i = 0; i < n_lines; ++i) {
-    il.set_value(REAL(value)[i]);
-    il.calculate_contour();
-    SET_VECTOR_ELT(out, i, il.collect());
-    if (il.was_interrupted()) {
-      longjump_interrupt();
-    }
-  }
+//   for (int i = 0; i < n_lines; ++i) {
+//     il.set_value(REAL(value)[i]);
+//     il.calculate_contour();
+//     SET_VECTOR_ELT(out, i, il.collect());
+//     if (il.was_interrupted()) {
+//       longjump_interrupt();
+//     }
+//   }
 
-  UNPROTECT(1);
-  return out;
+//   UNPROTECT(1);
+//   return out;
 
-  END_CPP
-}
+//   END_CPP
+// }
