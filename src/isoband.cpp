@@ -323,10 +323,10 @@ public:
       }
       //cout << endl;
     }
-    if (checkInterrupt()) {
-      interrupted = true;
-      return;
-    }
+    // if (checkInterrupt()) {
+    //   interrupted = true;
+    //   return;
+    // }
 
     // all polygons must be drawn clockwise for proper merging
     for (int r = 0; r < nrow-1; r++) {
