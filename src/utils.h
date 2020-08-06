@@ -4,8 +4,8 @@
 // Turn off non-exported functionality
 #define R_NO_REMAP
 
-#include <R.h>
-#include <Rinternals.h>
+// #include <R.h>
+// #include <Rinternals.h>
 
 // Define a C++ try-catch macro to guard C++ calls
 #define BEGIN_CPP try {
