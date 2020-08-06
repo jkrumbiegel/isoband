@@ -1399,10 +1399,10 @@ protected:
               polygon_grid[cur].next = tmp;
               cur = tmp;
               i++;
-              if (i % 100000 == 0 && checkInterrupt()) {
-                interrupted = true;
-                return;
-              }
+              // if (i % 100000 == 0 && checkInterrupt()) {
+              //   interrupted = true;
+              //   return;
+              // }
             } while (!(cur == grid_point()));
           }
           break;
@@ -1420,10 +1420,10 @@ protected:
               polygon_grid[cur].prev = tmp;
               cur = tmp;
               i++;
-              if (i % 100000 == 0 && checkInterrupt()) {
-                interrupted = true;
-                return;
-              }
+              // if (i % 100000 == 0 && checkInterrupt()) {
+              //   interrupted = true;
+              //   return;
+              // }
             } while (!(cur == grid_point()));
           }
           break;
