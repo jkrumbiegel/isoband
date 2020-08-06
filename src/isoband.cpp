@@ -1351,7 +1351,7 @@ protected:
         polygon_grid[tmp_poly[1]].next = tmp_poly[0];
       } else {
         // should never go here
-        Rf_error("cannot merge line segment at interior of existing line segment");
+        throw std::runtime_error("cannot merge line segment at interior of existing line segment");
       }
       break;
     case 2: // only second point connects
@@ -1363,7 +1363,7 @@ protected:
         polygon_grid[tmp_poly[0]].next = tmp_poly[1];
       } else {
         // should never go here
-        Rf_error("cannot merge line segment at interior of existing line segment");
+        throw std::runtime_error("cannot merge line segment at interior of existing line segment");
       }
       break;
     case 3: // two-way merge
