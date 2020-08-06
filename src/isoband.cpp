@@ -279,7 +279,7 @@ protected:
 
 public:
   isobander(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low = 0, double value_high = 0) :
-    grid_x_p(x), grid_y_p(y), grid_z_p(z),
+    grid_x_p(x), grid_y_p(y), grid_z_p(z), nrow(nrow), ncol(ncol),
     vlo(value_low), vhi(value_high), interrupted(false)
   {
 
