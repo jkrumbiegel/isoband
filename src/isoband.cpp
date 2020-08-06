@@ -276,15 +276,13 @@ protected:
   }
 
 public:
-  isobander(double *x, double *y, double *z, double value_low = 0, double value_high = 0) :
+  isobander(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low = 0, double value_high = 0) :
     grid_x_p(x), grid_y_p(y), grid_z_p(z),
     vlo(value_low), vhi(value_high), interrupted(false)
   {
-    nrow = Rf_nrows(grid_z);
-    ncol = Rf_ncols(grid_z);
 
-    if (Rf_length(grid_x) != ncol) {Rf_error("Number of x coordinates must match number of columns in density matrix.");}
-    if (Rf_length(grid_y) != nrow) {Rf_error("Number of y coordinates must match number of rows in density matrix.");}
+    if (lenx != ncol) {throw std::invalid_argument("Number of x coordinates must match number of columns in density matrix.");}
+    if (leny != nrow) {throw std::invalid_argument("Number of y coordinates must match number of rows in density matrix.");}
   }
 
   virtual ~isobander() {}
