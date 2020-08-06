@@ -1681,7 +1681,7 @@ struct resultStruct {
 extern "C" resultStruct isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low, double value_high) {
 
   BEGIN_CPP
-  isobander ib(x, lenx, y, leny, z, nrow, ncol);
+  isobander ib(x, lenx, y, leny, z, nrow, ncol, value_low, value_high);
 
   int n_bands = Rf_length(value_low);
   if (n_bands != Rf_length(value_high)) {
