@@ -1441,8 +1441,8 @@ protected:
   }
 
 public:
-  isoliner(SEXP x, SEXP y, SEXP z, double value = 0) :
-    isobander(x, y, z, value, 0) {}
+  isoliner(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value = 0) :
+    isobander(x, lenx, y, leny, z, nrow, ncol, value, 0) {}
 
   void set_value(double value) {
     vlo = value;
