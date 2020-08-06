@@ -1680,30 +1680,42 @@ struct resultStruct {
 
 extern "C" resultStruct isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low, double value_high) {
 
-  BEGIN_CPP
+  // BEGIN_CPP
   isobander ib(x, lenx, y, leny, z, nrow, ncol, value_low, value_high);
 
-  int n_bands = Rf_length(value_low);
-  if (n_bands != Rf_length(value_high)) {
-    Rf_error("Vectors of low and high values must have the same number of elements.");
-  }
+  // int n_bands = Rf_length(value_low);
+  // if (n_bands != Rf_length(value_high)) {
+  //   Rf_error("Vectors of low and high values must have the same number of elements.");
+  // }
 
   ib.calculate_contour();
-  SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
+  // SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
 
-  for (int i = 0; i < n_bands; ++i) {
-    ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
-    ib.calculate_contour();
-    SET_VECTOR_ELT(out, i, ib.collect());
-    if (ib.was_interrupted()) {
-      longjump_interrupt();
-    }
-  }
+  // for (int i = 0; i < n_bands; ++i) {
+  //   ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
+  //   ib.calculate_contour();
+  //   SET_VECTOR_ELT(out, i, ib.collect());
+  //   if (ib.was_interrupted()) {
+  //     longjump_interrupt();
+  //   }
+  // }
+  tuple<vector<double>, vector<double>, vector<int> > result = ib.collect();
 
-  UNPROTECT(1);
-  return out;
+  vector<double> res_x = get<0>(result);
+  vector<double> res_y = get<1>(result);
+  vector<int> res_id = get<2>(result);
 
-  END_CPP
+  int len = res_x.size();
+
+  struct resultStruct returnvalue;
+  returnvalue.x = res_x.data();
+  returnvalue.y = res_y.data();
+  returnvalue.id = res_id.data();
+  returnvalue.len = len;
+  // UNPROTECT(1);
+  return returnvalue;
+
+  // END_CPP
 }
 
 // extern "C" SEXP isolines_impl(SEXP x, SEXP y, SEXP z, SEXP value) {
