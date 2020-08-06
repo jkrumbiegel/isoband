@@ -11,11 +11,13 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <math.h>       /* isfinite */
 
 using namespace std;
 
 #include "polygon.h" // for point
 #include "utils.h"
+
 
 // point in abstract grid space
 enum point_type {
@@ -311,8 +313,8 @@ public:
     for (int r = 0; r < nrow-1; r++) {
       for (int c = 0; c < ncol-1; c++) {
         int index;
-        if (!R_finite(grid_z_p[r + c * nrow]) || !R_finite(grid_z_p[r + (c + 1) * nrow]) ||
-            !R_finite(grid_z_p[r + 1 + c * nrow]) || !R_finite(grid_z_p[r + 1 + (c + 1) * nrow])) {
+        if (!isfinite(grid_z_p[r + c * nrow]) || !isfinite(grid_z_p[r + (c + 1) * nrow]) ||
+            !isfinite(grid_z_p[r + 1 + c * nrow]) || !isfinite(grid_z_p[r + 1 + (c + 1) * nrow])) {
           // we don't draw any contours if at least one of the corners is NA
           index = 0;
         } else {
