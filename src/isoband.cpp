@@ -1484,10 +1484,10 @@ public:
       }
     }
 
-    if (checkInterrupt()) {
-      interrupted = true;
-      return;
-    }
+    // if (checkInterrupt()) {
+    //   interrupted = true;
+    //   return;
+    // }
 
     for (int r = 0; r < nrow-1; r++) {
       for (int c = 0; c < ncol-1; c++) {
