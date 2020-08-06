@@ -1428,12 +1428,12 @@ protected:
           }
           break;
         default:  // should never go here
-          Rf_error("cannot merge line segment at interior of existing line segment");
+          throw std::runtime_error("cannot merge line segment at interior of existing line segment");
         }
       }
     break;
     default:
-      Rf_error("unknown merge state");
+      throw std::runtime_error("unknown merge state");
     }
 
     //cout << "new grid:" << endl;
