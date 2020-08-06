@@ -217,7 +217,7 @@ protected:
             tmp_point_connect[i].altpoint = true;
             break;
           default:
-            Rf_error("undefined merging configuration: %i\n", score);
+            throw std::runtime_error("undefined merging configuration");
           }
         }
       }
