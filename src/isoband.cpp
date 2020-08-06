@@ -79,7 +79,7 @@ ostream & operator<<(ostream &out, const point_connect &pc) {
 class isobander {
 protected:
   int nrow, ncol; // numbers of rows and columns
-  SEXP grid_x, grid_y, grid_z;
+  // SEXP grid_x, grid_y, grid_z;
   double *grid_x_p, *grid_y_p, *grid_z_p;
   double vlo, vhi; // low and high cutoff values
   grid_point tmp_poly[8]; // temp storage for elementary polygons; none has more than 8 vertices
@@ -276,9 +276,9 @@ protected:
   }
 
 public:
-  isobander(SEXP x, SEXP y, SEXP z, double value_low = 0, double value_high = 0) :
-    grid_x(x), grid_y(y), grid_z(z), grid_x_p(REAL(x)), grid_y_p(REAL(y)),
-    grid_z_p(REAL(z)), vlo(value_low), vhi(value_high), interrupted(false)
+  isobander(double *x, double *y, double *z, double value_low = 0, double value_high = 0) :
+    grid_x_p(x), grid_y_p(y), grid_z_p(z),
+    vlo(value_low), vhi(value_high), interrupted(false)
   {
     nrow = Rf_nrows(grid_z);
     ncol = Rf_ncols(grid_z);
