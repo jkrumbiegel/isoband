@@ -1226,7 +1226,7 @@ public:
     }
   }
 
-  virtual tuple<vector<double>, vector<double>, vector<int>> collect() {
+  virtual tuple<vector<double>, vector<double>, vector<int> > collect() {
     // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
@@ -1579,7 +1579,7 @@ public:
     }
   }
 
-  virtual tuple<vector<double>, vector<double>, vector<int>> collect() {
+  virtual tuple<vector<double>, vector<double>, vector<int> > collect() {
     // // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
