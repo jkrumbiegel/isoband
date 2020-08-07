@@ -303,10 +303,12 @@ public:
     // setup matrix of ternarized cell representations
     vector<int> ternarized(nrow*ncol);
     vector<int>::iterator iv = ternarized.begin();
+
     for (int i = 0; i < nrow * ncol; ++i) {
       *iv = (grid_z_p[i] >= vlo && grid_z_p[i] < vhi) + 2*(grid_z_p[i] >= vhi);
       iv++;
     }
+
 
     vector<int> cells((nrow - 1) * (ncol - 1));
 
@@ -1680,7 +1682,6 @@ struct resultStruct {
 
 extern "C" resultStruct isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low, double value_high) {
 
-  // BEGIN_CPP
   isobander ib(x, lenx, y, leny, z, nrow, ncol, value_low, value_high);
 
   // int n_bands = Rf_length(value_low);
@@ -1705,17 +1706,20 @@ extern "C" resultStruct isobands_impl(double *x, int lenx, double *y, int leny, 
   vector<double> res_y = get<1>(result);
   vector<int> res_id = get<2>(result);
 
+
   int len = res_x.size();
 
   struct resultStruct returnvalue;
-  returnvalue.x = res_x.data();
-  returnvalue.y = res_y.data();
-  returnvalue.id = res_id.data();
-  returnvalue.len = len;
-  // UNPROTECT(1);
-  return returnvalue;
+  returnvalue.x = (double*) malloc(sizeof(double)*len);
+  returnvalue.y = (double*) malloc(sizeof(double)*len);
+  returnvalue.id = (int*) malloc(sizeof(int)*len);
 
-  // END_CPP
+  memcpy(returnvalue.x, res_x.data(), sizeof(double)*len);
+  memcpy(returnvalue.y, res_y.data(), sizeof(double)*len);
+  memcpy(returnvalue.id, res_id.data(), sizeof(int)*len);
+
+  returnvalue.len = len;
+  return returnvalue;
 }
 
 // extern "C" SEXP isolines_impl(SEXP x, SEXP y, SEXP z, SEXP value) {
