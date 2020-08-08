@@ -28,6 +28,14 @@ enum point_type {
   vintersect_hi  // intersection with vertical edge, high value
 };
 
+// return type for extern C functions
+struct resultStruct {
+  double *x;
+  double *y;
+  int *id;
+  int len;
+};
+
 struct grid_point {
   int r, c; // row and column
   point_type type; // point type
@@ -1228,7 +1236,7 @@ public:
     }
   }
 
-  virtual tuple<vector<double>, vector<double>, vector<int> > collect() {
+  virtual resultStruct collect() {
     // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
@@ -1310,7 +1318,17 @@ public:
 
     // UNPROTECT(2);
 
-    return make_tuple(x_out, y_out, id);
+    int len = x_out.size();
+
+    double* xs = new double[len];
+    double* ys = new double[len];
+    int* ids = new int[len];
+
+    copy(x_out.begin(), x_out.end(), xs);
+    copy(y_out.begin(), y_out.end(), ys);
+    copy(id.begin(), id.end(), ids);
+
+    return resultStruct{xs, ys, ids, len};
   }
 };
 
@@ -1581,7 +1599,7 @@ public:
     }
   }
 
-  virtual tuple<vector<double>, vector<double>, vector<int> > collect() {
+  virtual resultStruct collect() {
     // // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
@@ -1666,81 +1684,53 @@ public:
     //   id_final_p[i] = id[i];
     // }
 
-    // UNPROTECT(2);
-    // return res;
-    return make_tuple(x_out, y_out, id);
+    int len = x_out.size();
+
+    double* xs = new double[len];
+    double* ys = new double[len];
+    int* ids = new int[len];
+
+    copy(x_out.begin(), x_out.end(), xs);
+    copy(y_out.begin(), y_out.end(), ys);
+    copy(id.begin(), id.end(), ids);
+
+    return resultStruct{xs, ys, ids, len};
   }
 };
 
 
-struct resultStruct {
-  double *x;
-  double *y;
-  int *id;
-  int len;
-};
+extern "C" resultStruct* isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double *values_low, double *values_high, int n_bands) {
 
-extern "C" resultStruct isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low, double value_high) {
+  isobander ib(x, lenx, y, leny, z, nrow, ncol, 0.0, 0.0);
 
-  isobander ib(x, lenx, y, leny, z, nrow, ncol, value_low, value_high);
+  resultStruct* returnstructs = new resultStruct[n_bands];
 
-  // int n_bands = Rf_length(value_low);
-  // if (n_bands != Rf_length(value_high)) {
-  //   Rf_error("Vectors of low and high values must have the same number of elements.");
-  // }
+  for (int i = 0; i < n_bands; ++i) {
+    ib.set_value(values_low[i], values_high[i]);
+    ib.calculate_contour();
 
-  ib.calculate_contour();
-  // SEXP out = PROTECT(Rf_allocVector(VECSXP, n_bands));
+    resultStruct result = ib.collect();
 
-  // for (int i = 0; i < n_bands; ++i) {
-  //   ib.set_value(REAL(value_low)[i], REAL(value_high)[i]);
-  //   ib.calculate_contour();
-  //   SET_VECTOR_ELT(out, i, ib.collect());
-  //   if (ib.was_interrupted()) {
-  //     longjump_interrupt();
-  //   }
-  // }
-  tuple<vector<double>, vector<double>, vector<int> > result = ib.collect();
+    returnstructs[i] = result;
+  }
 
-  vector<double> res_x = get<0>(result);
-  vector<double> res_y = get<1>(result);
-  vector<int> res_id = get<2>(result);
-
-
-  int len = res_x.size();
-
-  struct resultStruct returnvalue;
-  returnvalue.x = (double*) malloc(sizeof(double)*len);
-  returnvalue.y = (double*) malloc(sizeof(double)*len);
-  returnvalue.id = (int*) malloc(sizeof(int)*len);
-
-  memcpy(returnvalue.x, res_x.data(), sizeof(double)*len);
-  memcpy(returnvalue.y, res_y.data(), sizeof(double)*len);
-  memcpy(returnvalue.id, res_id.data(), sizeof(int)*len);
-
-  returnvalue.len = len;
-  return returnvalue;
+  return returnstructs;
 }
 
-// extern "C" SEXP isolines_impl(SEXP x, SEXP y, SEXP z, SEXP value) {
+extern "C" resultStruct* isolines_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double *values, int n_values) {
 
-//   BEGIN_CPP
-//   isoliner il(x, y, z);
+  isoliner il(x, lenx, y, leny, z, nrow, ncol);
 
-//   int n_lines = Rf_length(value);
-//   SEXP out = PROTECT(Rf_allocVector(VECSXP, n_lines));
+  resultStruct* returnstructs = new resultStruct[n_values];
 
-//   for (int i = 0; i < n_lines; ++i) {
-//     il.set_value(REAL(value)[i]);
-//     il.calculate_contour();
-//     SET_VECTOR_ELT(out, i, il.collect());
-//     if (il.was_interrupted()) {
-//       longjump_interrupt();
-//     }
-//   }
+  for (int i = 0; i < n_values; ++i) {
+    il.set_value(values[i]);
+    il.calculate_contour();
 
-//   UNPROTECT(1);
-//   return out;
+    resultStruct result = il.collect();
 
-//   END_CPP
-// }
+    returnstructs[i] = result;
+  }
+
+  return returnstructs;
+}
