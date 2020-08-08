@@ -16,7 +16,6 @@
 using namespace std;
 
 #include "polygon.h" // for point
-#include "utils.h"
 
 
 // point in abstract grid space
