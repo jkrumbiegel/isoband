@@ -1254,7 +1254,7 @@ public:
 
       int i = 0;
       do {
-        point p = calc_point_coords(cur);
+        point<T> p = calc_point_coords(cur);
         x_out.push_back(p.x);
         y_out.push_back(p.y);
         id.push_back(cur_id);
@@ -1598,7 +1598,7 @@ public:
       start = cur; // reset starting point
       i = 0;
       do {
-        point p = calc_point_coords(cur);
+        point<T> p = calc_point_coords(cur);
 
         x_out.push_back(p.x);
         y_out.push_back(p.y);
@@ -1611,7 +1611,7 @@ public:
       } while (!(cur == start || cur == grid_point())); // keep going until we reach the start point again
       // if we're back to start, need to output that point one more time
       if (cur == start) {
-        point p = calc_point_coords(cur);
+        point<T> p = calc_point_coords(cur);
         x_out.push_back(p.x);
         y_out.push_back(p.y);
         id.push_back(cur_id);
