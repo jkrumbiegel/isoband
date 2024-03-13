@@ -8,16 +8,23 @@
 using namespace std;
 
 // point in x-y space
+template <typename T> 
 struct point {
-  double x, y; // x and y coordinates
+  T x, y; // x and y coordinates
 
-  point(double x_in = 0, double y_in = 0) : x(x_in), y(y_in) {}
+  point(T x_in = 0, T y_in = 0) : x(x_in), y(y_in) {}
 };
 
-bool operator==(const point &p1, const point &p2);
-ostream & operator<<(ostream &out, const point &p);
+using pointd = point<double>;
+using pointf = point<float>;
 
-typedef vector<point> polygon;
+bool operator==(const pointd &p1, const pointd &p2);
+ostream & operator<<(ostream &out, const pointd &p);
+
+bool operator==(const pointf &p1, const pointf &p2);
+ostream & operator<<(ostream &out, const pointf &p);
+
+typedef vector<pointd> polygon;
 
 enum in_polygon_type {
   inside,       // point is inside a polygon

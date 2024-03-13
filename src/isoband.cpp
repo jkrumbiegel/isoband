@@ -17,7 +17,6 @@ using namespace std;
 
 #include "polygon.h" // for point
 
-
 // point in abstract grid space
 enum point_type {
   grid,  // point on the original data grid
@@ -28,9 +27,10 @@ enum point_type {
 };
 
 // return type for extern C functions
+template <typename T>  
 struct resultStruct {
-  double *x;
-  double *y;
+  T *x;
+  T *y;
   int *id;
   int len;
 };
@@ -40,7 +40,7 @@ struct grid_point {
   point_type type; // point type
 
   // default constructor; negative values indicate non-existing point off grid
-  grid_point(double r_in = -1, double c_in = -1, point_type type_in = grid) : r(r_in), c(c_in), type(type_in) {}
+  grid_point(int r_in = -1, int c_in = -1, point_type type_in = grid) : r(r_in), c(c_in), type(type_in) {}
   // copy constructor
   grid_point(const grid_point &p) : r(p.r), c(p.c), type(p.type) {}
 };
@@ -85,12 +85,13 @@ ostream & operator<<(ostream &out, const point_connect &pc) {
   return out;
 }
 
+template <typename T>  
 class isobander {
 protected:
   int nrow, ncol; // numbers of rows and columns
   // SEXP grid_x, grid_y, grid_z;
-  double *grid_x_p, *grid_y_p, *grid_z_p;
-  double vlo, vhi; // low and high cutoff values
+  T *grid_x_p, *grid_y_p, *grid_z_p;
+  T vlo, vhi; // low and high cutoff values
   grid_point tmp_poly[8]; // temp storage for elementary polygons; none has more than 8 vertices
   point_connect tmp_point_connect[8];
   int tmp_poly_size; // current number of elements in tmp_poly
@@ -103,14 +104,14 @@ protected:
   void reset_grid() {
     polygon_grid.clear();
 
-    for (int i=0; i<8; i++) {
+    for (auto i=0; i<8; i++) {
       tmp_point_connect[i] = point_connect();
     }
   }
 
   // internal member functions
 
-  double central_value(int r, int c) {// calculates the central value of a given cell
+  T central_value(int r, int c) {// calculates the central value of a given cell
     return (grid_z_p[r + c * nrow] + grid_z_p[r + (c + 1) * nrow] + grid_z_p[r + 1 + c * nrow] + grid_z_p[r + 1 + (c + 1) * nrow])/4;
   }
 
@@ -131,19 +132,15 @@ protected:
   }
 
   void poly_merge() { // merge current elementary polygon to prior polygons
-    //cout << "before merging:" << endl;
-
     bool to_delete[] = {false, false, false, false, false, false, false, false};
 
     // first, we figure out the right connections for current polygon
-    for (int i = 0; i < tmp_poly_size; i++) {
+    for (auto i = 0; i < tmp_poly_size; i++) {
       // create defined state in tmp_point_connect[]
       // for each point, find previous and next point in polygon
       tmp_point_connect[i].altpoint = false;
       tmp_point_connect[i].next = tmp_poly[(i+1<tmp_poly_size) ? i+1 : 0];
       tmp_point_connect[i].prev = tmp_poly[(i-1>=0) ? i-1 : tmp_poly_size-1];
-
-      //cout << tmp_poly[i] << ": " << tmp_point_connect[i] << endl;
 
       // now merge with existing polygons if needed
       const grid_point &p = tmp_poly[i];
@@ -232,10 +229,8 @@ protected:
       }
     }
 
-    //cout << "after merging:" << endl;
-
     // then we copy the connections into the polygon matrix
-    for (int i = 0; i < tmp_poly_size; i++) {
+    for (auto i = 0; i < tmp_poly_size; i++) {
       const grid_point &p = tmp_poly[i];
 
       if (to_delete[i]) { // delete point if needed
@@ -243,13 +238,10 @@ protected:
       } else {            // otherwise, copy
         polygon_grid[p] = tmp_point_connect[i];
       }
-      //cout << p << ": " << tmp_point_connect[i] << endl;
     }
 
-    //cout << "new grid:" << endl;
-    //print_polygons_state();
+    // print_polygons_state();
   }
-
 
   void print_polygons_state() {
     for (auto it = polygon_grid.begin(); it != polygon_grid.end(); it++) {
@@ -258,34 +250,33 @@ protected:
     cout << endl;
   }
 
-
   // linear interpolation of boundary intersections
-  double interpolate(double x0, double x1, double z0, double z1, double value) {
-    double d = (value - z0) / (z1 - z0);
-    double x = x0 + d * (x1 - x0);
+  T interpolate(T x0, T x1, T z0, T z1, T value) {
+    T d = (value - z0) / (z1 - z0);
+    T x = x0 + d * (x1 - x0);
     return x;
   }
 
   // calculate output coordinates for a given grid point
-  point calc_point_coords(const grid_point &p) {
+  point<T> calc_point_coords(const grid_point &p) {
     switch(p.type) {
     case grid:
-      return point(grid_x_p[p.c], grid_y_p[p.r]);
+      return point<T>(grid_x_p[p.c], grid_y_p[p.r]);
     case hintersect_lo: // intersection with horizontal edge, low value
-      return point(interpolate(grid_x_p[p.c], grid_x_p[p.c+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + (p.c + 1) * nrow], vlo), grid_y_p[p.r]);
+      return point<T>(interpolate(grid_x_p[p.c], grid_x_p[p.c+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + (p.c + 1) * nrow], vlo), grid_y_p[p.r]);
     case hintersect_hi: // intersection with horizontal edge, high value
-      return point(interpolate(grid_x_p[p.c], grid_x_p[p.c+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + (p.c + 1) * nrow], vhi), grid_y_p[p.r]);
+      return point<T>(interpolate(grid_x_p[p.c], grid_x_p[p.c+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + (p.c + 1) * nrow], vhi), grid_y_p[p.r]);
     case vintersect_lo: // intersection with vertical edge, low value
-      return point(grid_x_p[p.c], interpolate(grid_y_p[p.r], grid_y_p[p.r+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + 1 + p.c * nrow], vlo));
+      return point<T>(grid_x_p[p.c], interpolate(grid_y_p[p.r], grid_y_p[p.r+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + 1 + p.c * nrow], vlo));
     case vintersect_hi: // intersection with vertical edge, high value
-      return point(grid_x_p[p.c], interpolate(grid_y_p[p.r], grid_y_p[p.r+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + 1 + p.c * nrow], vhi));
+      return point<T>(grid_x_p[p.c], interpolate(grid_y_p[p.r], grid_y_p[p.r+1], grid_z_p[p.r + p.c * nrow], grid_z_p[p.r + 1 + p.c * nrow], vhi));
     default:
-      return point(0, 0); // should never get here
+      return point<T>(0, 0); // should never get here
     }
   }
 
 public:
-  isobander(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value_low = 0, double value_high = 0) :
+  isobander(T *x, int lenx, T *y, int leny, T *z, int nrow, int ncol, T value_low = 0, T value_high = 0) :
     grid_x_p(x), grid_y_p(y), grid_z_p(z), nrow(nrow), ncol(ncol),
     vlo(value_low), vhi(value_high), interrupted(false)
   {
@@ -298,7 +289,7 @@ public:
 
   bool was_interrupted() {return interrupted;}
 
-  void set_value(double value_low, double value_high) {
+  void set_value(T value_low, T value_high) {
     vlo = value_low;
     vhi = value_high;
   }
@@ -311,7 +302,7 @@ public:
     vector<int> ternarized(nrow*ncol);
     vector<int>::iterator iv = ternarized.begin();
 
-    for (int i = 0; i < nrow * ncol; ++i) {
+    for (auto i = 0; i < nrow * ncol; ++i) {
       *iv = (grid_z_p[i] >= vlo && grid_z_p[i] < vhi) + 2*(grid_z_p[i] >= vhi);
       iv++;
     }
@@ -319,8 +310,8 @@ public:
 
     vector<int> cells((nrow - 1) * (ncol - 1));
 
-    for (int r = 0; r < nrow-1; r++) {
-      for (int c = 0; c < ncol-1; c++) {
+    for (auto r = 0; r < nrow-1; r++) {
+      for (auto c = 0; c < ncol-1; c++) {
         int index;
         if (!isfinite(grid_z_p[r + c * nrow]) || !isfinite(grid_z_p[r + (c + 1) * nrow]) ||
             !isfinite(grid_z_p[r + 1 + c * nrow]) || !isfinite(grid_z_p[r + 1 + (c + 1) * nrow])) {
@@ -340,8 +331,8 @@ public:
     // }
 
     // all polygons must be drawn clockwise for proper merging
-    for (int r = 0; r < nrow-1; r++) {
-      for (int c = 0; c < ncol-1; c++) {
+    for (auto r = 0; r < nrow-1; r++) {
+      for (auto c = 0; c < ncol-1; c++) {
         //cout << r << " " << c << " " << cells(r, c) << endl;
         switch(cells[r + c * (nrow - 1)]) {
         // doing cases out of order, sorted by type, is easier to keep track of
@@ -860,7 +851,7 @@ public:
         // 6-sided saddle
         case 10: // 0101
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r+1, c, grid);
               poly_add(r, c, vintersect_lo);
@@ -883,7 +874,7 @@ public:
           break;
         case 30: // 1010
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r, c, grid);
               poly_add(r, c, hintersect_lo);
@@ -906,7 +897,7 @@ public:
           break;
         case 70: // 2121
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc >= vhi) {
               poly_start(r+1, c, grid);
               poly_add(r, c, vintersect_hi);
@@ -929,7 +920,7 @@ public:
           break;
         case 50: // 1212
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc >= vhi) {
               poly_start(r, c, grid);
               poly_add(r, c, hintersect_hi);
@@ -954,7 +945,7 @@ public:
         // 7-sided saddle
         case 69: // 2120
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc >= vhi) {
               poly_start(r, c+1, grid);
               poly_add(r, c+1, vintersect_hi);
@@ -979,7 +970,7 @@ public:
           break;
         case 61: // 2021
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
               if (vc >= vhi) {
                 poly_start(r+1, c, grid);
                 poly_add(r, c, vintersect_hi);
@@ -1004,7 +995,7 @@ public:
           break;
         case 47: // 1202
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc >= vhi) {
               poly_start(r, c, grid);
               poly_add(r, c, hintersect_hi);
@@ -1029,7 +1020,7 @@ public:
           break;
         case 23: // 0212
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc >= vhi) {
               poly_start(r+1, c+1, grid);
               poly_add(r+1, c, hintersect_hi);
@@ -1054,7 +1045,7 @@ public:
           break;
         case 11: // 0102
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r, c+1, grid);
               poly_add(r, c+1, vintersect_lo);
@@ -1079,7 +1070,7 @@ public:
           break;
         case 19: // 0201
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r+1, c, grid);
               poly_add(r, c, vintersect_lo);
@@ -1104,7 +1095,7 @@ public:
           break;
         case 33: // 1020
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r, c, grid);
               poly_add(r, c, hintersect_lo);
@@ -1129,7 +1120,7 @@ public:
           break;
         case 57: // 2010
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r+1, c+1, grid);
               poly_add(r+1, c, hintersect_lo);
@@ -1156,7 +1147,7 @@ public:
         // 8-sided saddle
       case 60: // 2020
         {
-          double vc = central_value(r, c);
+          T vc = central_value(r, c);
           if (vc < vlo) {
             poly_start(r, c, vintersect_hi);
             poly_add(r, c, hintersect_hi);
@@ -1194,7 +1185,7 @@ public:
         break;
         case 20: // 0202
           {
-            double vc = central_value(r, c);
+            T vc = central_value(r, c);
             if (vc < vlo) {
               poly_start(r, c, vintersect_lo);
               poly_add(r+1, c, hintersect_lo);
@@ -1235,14 +1226,14 @@ public:
     }
   }
 
-  virtual resultStruct collect() {
+  virtual resultStruct<T> collect() {
     // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
     // }
 
     // make polygons
-    vector<double> x_out, y_out; vector<int> id;  // vectors holding resulting polygon paths
+    vector<T> x_out, y_out; vector<int> id;  // vectors holding resulting polygon paths
     int cur_id = 0;           // id counter for the polygon lines
 
     // iterate over all locations in the polygon grid
@@ -1263,7 +1254,7 @@ public:
 
       int i = 0;
       do {
-        point p = calc_point_coords(cur);
+        point<T> p = calc_point_coords(cur);
         x_out.push_back(p.x);
         y_out.push_back(p.y);
         id.push_back(cur_id);
@@ -1287,54 +1278,43 @@ public:
           cur = newcur;
         }
         i++;
-        // if (i % 100000 == 0 && checkInterrupt()) {
-        //   interrupted = true;
-        //   return R_NilValue;
-        // }
       } while (!(cur == start)); // keep going until we reach the start point again
     }
-    // // output variable
-    // SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
-    // SEXP names = PROTECT(Rf_allocVector(STRSXP, 3));
-    // SET_STRING_ELT(names, 0, Rf_mkChar("x"));
-    // SET_STRING_ELT(names, 1, Rf_mkChar("y"));
-    // SET_STRING_ELT(names, 2, Rf_mkChar("id"));
-    // Rf_setAttrib(res, Rf_install("names"), names);
-
-    // int final_size = x_out.size();
-    // SEXP x_final = SET_VECTOR_ELT(res, 0, Rf_allocVector(REALSXP, final_size));
-    // double* x_final_p = REAL(x_final);
-    // SEXP y_final = SET_VECTOR_ELT(res, 1, Rf_allocVector(REALSXP, final_size));
-    // double* y_final_p = REAL(y_final);
-    // SEXP id_final = SET_VECTOR_ELT(res, 2, Rf_allocVector(INTSXP, final_size));
-    // int* id_final_p = INTEGER(id_final);
-
-    // for (int i = 0; i < final_size; ++i) {
-    //   x_final_p[i] = x_out[i];
-    //   y_final_p[i] = y_out[i];
-    //   id_final_p[i] = id[i];
-    // }
-
-    // UNPROTECT(2);
 
     int len = x_out.size();
 
-    double* xs = new double[len];
-    double* ys = new double[len];
+    T* xs = new T[len];
+    T* ys = new T[len];
     int* ids = new int[len];
 
     copy(x_out.begin(), x_out.end(), xs);
     copy(y_out.begin(), y_out.end(), ys);
     copy(id.begin(), id.end(), ids);
 
-    return resultStruct{xs, ys, ids, len};
+    return resultStruct<T>{xs, ys, ids, len};
   }
 };
 
 
-class isoliner : public isobander {
-protected:
+template <typename T>  
+class isoliner : public isobander<T> {
+  using isobander<T>::tmp_poly_size;
+  using isobander<T>::polygon_grid;
+  using isobander<T>::tmp_poly;
+  using isobander<T>::vlo;
+  using isobander<T>::vhi;
+  using isobander<T>::nrow;
+  using isobander<T>::ncol;
+  using isobander<T>::grid_x_p;
+  using isobander<T>::grid_y_p;
+  using isobander<T>::grid_z_p;
+  using isobander<T>::reset_grid;
+  using isobander<T>::central_value;
+  using isobander<T>::calc_point_coords;
+  using isobander<T>::poly_start;
+  using isobander<T>::poly_add;
 
+protected:
   void line_start(int r, int c, point_type type) { // start a new line segment
     tmp_poly[0].r = r;
     tmp_poly[0].c = c;
@@ -1352,8 +1332,6 @@ protected:
   }
 
   void line_merge() { // merge current elementary polygon to prior polygons
-    //cout << "merging points: " << tmp_poly[0] << " " << tmp_poly[1] << endl;
-
     int score = 2*polygon_grid.count(tmp_poly[1]) + polygon_grid.count(tmp_poly[0]);
 
     switch(score) {
@@ -1386,7 +1364,6 @@ protected:
       }
       break;
     case 3: // two-way merge
-      //cout << "two-way merge not implemented" << endl;
       //break; // two-way merge doesn't work yet
       {
         int score2 =
@@ -1418,10 +1395,6 @@ protected:
               polygon_grid[cur].next = tmp;
               cur = tmp;
               i++;
-              // if (i % 100000 == 0 && checkInterrupt()) {
-              //   interrupted = true;
-              //   return;
-              // }
             } while (!(cur == grid_point()));
           }
           break;
@@ -1439,10 +1412,6 @@ protected:
               polygon_grid[cur].prev = tmp;
               cur = tmp;
               i++;
-              // if (i % 100000 == 0 && checkInterrupt()) {
-              //   interrupted = true;
-              //   return;
-              // }
             } while (!(cur == grid_point()));
           }
           break;
@@ -1454,16 +1423,13 @@ protected:
     default:
       throw std::runtime_error("unknown merge state");
     }
-
-    //cout << "new grid:" << endl;
-    //print_polygons_state();
   }
 
 public:
-  isoliner(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double value = 0) :
-    isobander(x, lenx, y, leny, z, nrow, ncol, value, 0) {}
+  isoliner(T *x, int lenx, T *y, int leny, T *z, int nrow, int ncol, T value = 0) :
+    isobander<T>(x, lenx, y, leny, z, nrow, ncol, value, 0) {}
 
-  void set_value(double value) {
+  void set_value(T value) {
     vlo = value;
   }
 
@@ -1474,15 +1440,15 @@ public:
     // setup matrix of binarized cell representations
     vector<int> binarized(nrow*ncol);
     vector<int>::iterator iv = binarized.begin();
-    for (int i = 0; i < nrow * ncol; ++i) {
+    for (auto i = 0; i < nrow * ncol; ++i) {
       *iv = (grid_z_p[i] >= vlo);
       iv++;
     }
 
     vector<int> cells((nrow - 1) * (ncol - 1));
 
-    for (int r = 0; r < nrow-1; r++) {
-      for (int c = 0; c < ncol-1; c++) {
+    for (auto r = 0; r < nrow-1; r++) {
+      for (auto c = 0; c < ncol-1; c++) {
         int index;
         if (!isfinite(grid_z_p[r + c * nrow]) || !isfinite(grid_z_p[r + (c + 1) * nrow]) ||
             !isfinite(grid_z_p[r + 1 + c * nrow]) || !isfinite(grid_z_p[r + 1 + (c + 1) * nrow])) {
@@ -1508,8 +1474,8 @@ public:
     //   return;
     // }
 
-    for (int r = 0; r < nrow-1; r++) {
-      for (int c = 0; c < ncol-1; c++) {
+    for (auto r = 0; r < nrow-1; r++) {
+      for (auto c = 0; c < ncol-1; c++) {
         switch(cells[r + c * (nrow - 1)]) {
         case 0: break;
         case 1:
@@ -1598,19 +1564,18 @@ public:
     }
   }
 
-  virtual resultStruct collect() {
+  virtual resultStruct<T> collect() {
     // // Early exit if calculate_contour was interrupted
     // if (was_interrupted()) {
     //   return R_NilValue;
     // }
 
     // make line segments
-    vector<double> x_out, y_out; vector<int> id;  // vectors holding resulting polygon paths
+    vector<T> x_out, y_out; vector<int> id;  // vectors holding resulting polygon paths
     int cur_id = 0;           // id counter for individual line segments
 
     // iterate over all locations in the polygon grid
     for (auto it = polygon_grid.begin(); it != polygon_grid.end(); it++) {
-      //cout << it->first << " " << (it->second).collected << endl;
       if ((it->second).collected) {
         continue; // skip any grid points that are already collected
       }
@@ -1627,18 +1592,13 @@ public:
         do {
           cur = polygon_grid[cur].prev;
           i++;
-          // if (i % 100000 == 0 && checkInterrupt()) {
-          //   interrupted = true;
-          //   return R_NilValue;
-          // }
         } while (!(cur == start || polygon_grid[cur].prev == grid_point()));
       }
 
       start = cur; // reset starting point
       i = 0;
       do {
-        //cout << cur << endl;
-        point p = calc_point_coords(cur);
+        point<T> p = calc_point_coords(cur);
 
         x_out.push_back(p.x);
         y_out.push_back(p.y);
@@ -1648,67 +1608,40 @@ public:
         polygon_grid[cur].collected = true;
         cur = polygon_grid[cur].next;
         i++;
-        // if (i % 100000 == 0 && checkInterrupt()) {
-        //   interrupted = true;
-        //   return R_NilValue;
-        // }
       } while (!(cur == start || cur == grid_point())); // keep going until we reach the start point again
       // if we're back to start, need to output that point one more time
       if (cur == start) {
-        point p = calc_point_coords(cur);
+        point<T> p = calc_point_coords(cur);
         x_out.push_back(p.x);
         y_out.push_back(p.y);
         id.push_back(cur_id);
       }
     }
-    // // output variable
-    // SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
-    // SEXP names = PROTECT(Rf_allocVector(STRSXP, 3));
-    // SET_STRING_ELT(names, 0, Rf_mkChar("x"));
-    // SET_STRING_ELT(names, 1, Rf_mkChar("y"));
-    // SET_STRING_ELT(names, 2, Rf_mkChar("id"));
-    // Rf_setAttrib(res, Rf_install("names"), names);
-
-    // int final_size = x_out.size();
-    // SEXP x_final = SET_VECTOR_ELT(res, 0, Rf_allocVector(REALSXP, final_size));
-    // double* x_final_p = REAL(x_final);
-    // SEXP y_final = SET_VECTOR_ELT(res, 1, Rf_allocVector(REALSXP, final_size));
-    // double* y_final_p = REAL(y_final);
-    // SEXP id_final = SET_VECTOR_ELT(res, 2, Rf_allocVector(INTSXP, final_size));
-    // int* id_final_p = INTEGER(id_final);
-
-    // for (int i = 0; i < final_size; ++i) {
-    //   x_final_p[i] = x_out[i];
-    //   y_final_p[i] = y_out[i];
-    //   id_final_p[i] = id[i];
-    // }
 
     int len = x_out.size();
 
-    double* xs = new double[len];
-    double* ys = new double[len];
+    T* xs = new T[len];
+    T* ys = new T[len];
     int* ids = new int[len];
 
     copy(x_out.begin(), x_out.end(), xs);
     copy(y_out.begin(), y_out.end(), ys);
     copy(id.begin(), id.end(), ids);
 
-    return resultStruct{xs, ys, ids, len};
+    return resultStruct<T>{xs, ys, ids, len};
   }
 };
+extern "C" resultStruct<float>* isobands32_impl(float *x, int lenx, float *y, int leny, float *z, int nrow, int ncol, float *values_low, float *values_high, int n_bands) {
 
+  isobander<float> ib(x, lenx, y, leny, z, nrow, ncol, 0.0, 0.0);
 
-extern "C" resultStruct* isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double *values_low, double *values_high, int n_bands) {
+  resultStruct<float>* returnstructs = new resultStruct<float>[n_bands];
 
-  isobander ib(x, lenx, y, leny, z, nrow, ncol, 0.0, 0.0);
-
-  resultStruct* returnstructs = new resultStruct[n_bands];
-
-  for (int i = 0; i < n_bands; ++i) {
+  for (auto i = 0; i < n_bands; ++i) {
     ib.set_value(values_low[i], values_high[i]);
     ib.calculate_contour();
 
-    resultStruct result = ib.collect();
+    resultStruct<float> result = ib.collect();
 
     returnstructs[i] = result;
   }
@@ -1716,17 +1649,53 @@ extern "C" resultStruct* isobands_impl(double *x, int lenx, double *y, int leny,
   return returnstructs;
 }
 
-extern "C" resultStruct* isolines_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double *values, int n_values) {
+extern "C" resultStruct<float>* isolines32_impl(float *x, int lenx, float *y, int leny, float *z, int nrow, int ncol, float *values, int n_values) {
 
-  isoliner il(x, lenx, y, leny, z, nrow, ncol);
+  isoliner<float> il(x, lenx, y, leny, z, nrow, ncol);
 
-  resultStruct* returnstructs = new resultStruct[n_values];
+  resultStruct<float>* returnstructs = new resultStruct<float>[n_values];
 
-  for (int i = 0; i < n_values; ++i) {
+  for (auto i = 0; i < n_values; ++i) {
     il.set_value(values[i]);
     il.calculate_contour();
 
-    resultStruct result = il.collect();
+    resultStruct<float> result = il.collect();
+
+    returnstructs[i] = result;
+  }
+
+  return returnstructs;
+}
+
+extern "C" resultStruct<double>* isobands_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double *values_low, double *values_high, int n_bands) {
+
+  isobander<double> ib(x, lenx, y, leny, z, nrow, ncol, 0.0, 0.0);
+
+  resultStruct<double>* returnstructs = new resultStruct<double>[n_bands];
+
+  for (auto i = 0; i < n_bands; ++i) {
+    ib.set_value(values_low[i], values_high[i]);
+    ib.calculate_contour();
+
+    resultStruct<double> result = ib.collect();
+
+    returnstructs[i] = result;
+  }
+
+  return returnstructs;
+}
+
+extern "C" resultStruct<double>* isolines_impl(double *x, int lenx, double *y, int leny, double *z, int nrow, int ncol, double *values, int n_values) {
+
+  isoliner<double> il(x, lenx, y, leny, z, nrow, ncol);
+
+  resultStruct<double>* returnstructs = new resultStruct<double>[n_values];
+
+  for (auto i = 0; i < n_values; ++i) {
+    il.set_value(values[i]);
+    il.calculate_contour();
+
+    resultStruct<double> result = il.collect();
 
     returnstructs[i] = result;
   }
